@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Demo - The Web's Sixth Sense: A Study of Scripts Accessing Smartphone Sensors</title>
+  <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
+  <title>JavaScript Sensor Access Demo</title>
+  <style>
+    #demo-div {
+      color: lightgrey;
+      border-radius: 0.3rem;
+    }
+
+    #demo-div span,
+    #demo-div #num-observed-events {
+      color: black;
+    }
+
+    h1 {
+      margin-top: 0.5rem;
+    }
+
+    h4 {
+      margin-top: 0.66rem;
+      font-size: 1.33rem;
+    }
+
+    #demo-div li {
+      line-height: 21px;
+    }
+
+    #demo-div ul {
+      margin-bottom: 0.66rem;
+    }
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+
+
+<body>
+  <main role="main" class="container">
+
+    <h1 align="left">titleeee</h1>
+
+    <div class="p-3 mb-2 bg-secondary" id="demo-div">
+      <a id="start_demo" class="btn btn-lg btn-success py-1" href="#" role="button">Start the demo</a>
+      <p style="margin-top:1rem;">Num. of datapoints: <span class="badge badge-warning"
+          id="num-observed-events">0</span></p>
+
+
+      <h4 style="margin-top:0.75rem;">Orientation</h4>
+
+      <ul>
+        <li>X-axis (&beta;): <span id="Orientation_b">0</span><span>&deg;</span></li>
+        <li>Y-axis (&gamma;): <span id="Orientation_g">0</span><span>&deg;</span></li>
+        <li>Z-axis (&alpha;): <span id="Orientation_a">0</span><span>&deg;</span></li>
+      </ul>
+
+      <h4>Accelerometer</h4>
+      <ul>
+        <li>X-axis: <span id="Accelerometer_x">0</span><span> m/s<sup>2</sup></span></li>
+        <li>Y-axis: <span id="Accelerometer_y">0</span><span> m/s<sup>2</sup></span></li>
+        <li>Z-axis: <span id="Accelerometer_z">0</span><span> m/s<sup>2</sup></span></li>
+        <li>Data Interval: <span id="Accelerometer_i">0</span><span> ms</span></li>
+      </ul>
+
+      <h4>Gyroscope</h4>
+      <ul>
+        <li>X-axis: <span id="Gyroscope_x">0</span><span>&deg;/s</span></li>
+        <li>Y-axis: <span id="Gyroscope_y">0</span><span>&deg;/s</span></li>
+        <li>Z-axis: <span id="Gyroscope_z">0</span><span>&deg;/s</span></li>
+      </ul>
+
+    </div>
+
+
+
+
+    <br><br><br>
+    <div class="canva">
+
+    </div>
+
+
+  </main>
+
+  <footer class="footer">
+  </footer>
+  <script>
+
+    let data_orientation = []
+    let data_acceleration = []
+    let data_rotation = []
+
+
+    function handleOrientation(event) {
+      data_orientation.push({
+        x: event.beta,
+        y: event.gamma,
+        z: event.alpha
+      })
+      //console.log(data_orientation);
+
+
+      updateFieldIfNotNull('Orientation_a', event.alpha);
+      updateFieldIfNotNull('Orientation_b', event.beta);
+      updateFieldIfNotNull('Orientation_g', event.gamma);
+      //incrementEventCount();
+    }
+
+    function incrementEventCount() {
+      let counterElement = document.getElementById("num-observed-events")
+      let eventCount = parseInt(counterElement.innerHTML)
+      counterElement.innerHTML = eventCount + 1;
+    }
+
+    function updateFieldIfNotNull(fieldName, value, precision = 10) {
+      if (value != null)
+        document.getElementById(fieldName).innerHTML = value.toFixed(precision);
+    }
+
+    function handleMotion(event) {
+      data_acceleration.push(
+        {
+          x: event.acceleration.x,
+          y: event.acceleration.y,
+          z: event.acceleration.z
+        })
+
+      data_rotation.push(
+        {
+          x: event.rotationRate.beta,
+          y: event.rotationRate.gamma,
+          z: event.rotationRate.alpha
+        })
+
+      //console.log(data_acceleration);
+      //console.log(data_rotation);
+
+      updateFieldIfNotNull('Accelerometer_x', event.acceleration.x);
+      updateFieldIfNotNull('Accelerometer_y', event.acceleration.y);
+      updateFieldIfNotNull('Accelerometer_z', event.acceleration.z);
+
+      updateFieldIfNotNull('Accelerometer_i', event.interval, 2);
+
+      updateFieldIfNotNull('Gyroscope_z', event.rotationRate.alpha);
+      updateFieldIfNotNull('Gyroscope_x', event.rotationRate.beta);
+      updateFieldIfNotNull('Gyroscope_y', event.rotationRate.gamma);
+      incrementEventCount();
+    }
+
+
+    let is_running = false;
+    let is_visualizing = false;
+    let demo_button = document.getElementById("start_demo");
+    demo_button.onclick = function (e) {
+      e.preventDefault();
+
+      // Request permission for iOS 13+ devices
+      if (
+        DeviceMotionEvent &&
+        typeof DeviceMotionEvent.requestPermission === "function"
+      ) {
+        DeviceMotionEvent.requestPermission();
+      }
+      //onPermissionRequestClick();
+
+      if (is_running) {
+        window.removeEventListener("devicemotion", handleMotion);
+        window.removeEventListener("deviceorientation", handleOrientation);
+        demo_button.innerHTML = "Start demo";
+        demo_button.classList.add('btn-success');
+        demo_button.classList.remove('btn-danger');
+        is_running = false;
+
+        var allData = [];
+        var acc_mag = [];
+        var rot_mag = [];
+        let counterElement = document.getElementById("num-observed-events")
+        let eventCount = parseInt(counterElement.innerHTML)
+        for (i = 0; i < eventCount; i++) {
+          allData.push({
+            ori: data_orientation[i],
+            acc: data_acceleration[i],
+            rot: data_rotation[i]
+          })
+          acc_mag.push(Math.hypot(Math.abs(data_acceleration[i].x), 
+                                  Math.abs(data_acceleration[i].y),
+                                  Math.abs(data_acceleration[i].z)))
+          rot_mag.push(Math.hypot(Math.abs(data_rotation[i].x),
+                                  Math.abs(data_rotation[i].y),
+                                  Math.abs(data_rotation[i].z)))
+        }
+
+        var min_acc = Math.min(acc_mag);
+        var max_acc = Math.max(acc_mag);
+        var min_rot = Math.min(rot_mag);
+        var max_rot = Math.max(rot_mag);
+
+        // const fs = require('fs');
+        // const data = JSON.stringify(allData);
+
+        // fs.writeFile("data.json", data, (err) => {
+        //   if (err) {
+        //     throw err;
+        //   }
+        //   console.log("JSON data is saved.");
+        // });
+
+        const canvas = d3.select(".canva");
+
+        //ORIENTATION X
+
+        const svg = canvas.append("svg")
+          .attr('width', 600)
+          .attr('height', 300)
+
+        svg.append("text")
+          .text("Orientation X")
+          .attr("x", 0)
+          .attr("y", 50)
+
+        const rect = svg.selectAll("rect");
+
+        rect.data(allData)
+          .enter().append("rect")
+          .attr("width", 1)
+          .attr("fill", "black")
+          .attr("height", function (d) {
+            //console.log(d.ori.x);
+            return d.ori.x;
+          })
+          .attr("x", function (d, i) {
+            return i;
+          })
+          .attr("y", function (d, i) {
+            return 200 - (d.ori.x);
+          })
+
+        //ORIENTATION Y
+
+        const svg2 = canvas.append("svg")
+          .attr('width', 600)
+          .attr('height', 300)
+
+        svg2.append("text")
+          .text("Orientation Y")
+          .attr("x", 0)
+          .attr("y", 50)
+
+        const rect2 = svg2.selectAll("rect");
+
+        rect2.data(allData)
+          .enter().append("rect")
+          .attr("width", 1)
+          .attr("fill", "black")
+          .attr("height", function (d) {
+            //console.log(d.ori.y);
+            return Math.abs(d.ori.y);
+          })
+          .attr("x", function (d, i) {
+            return i;
+          })
+          .attr("y", function (d, i) {
+            return 200 - (d.ori.y);
+          })
+
+        //ORIENTATION Z
+
+        const svg3 = canvas.append("svg")
+          .attr('width', 600)
+          .attr('height', 600)
+
+        const circ = svg3.selectAll("circle");
+
+        var color1 = d3.hsl(120,1,0.25,1);
+        console.log(scale(2,0,5,3,8));
+
+        circ.data(allData)
+          .enter().append("circle")
+          .attr('cx', 300)
+          .attr('cy', 300)
+          .attr('r', function (d, i) {
+            //console.log(d.ori.z);
+            let mag = Math.hypot(d.acc.x, d.acc.y, d.acc.z);
+            //console.log(mag);
+            return scale(mag, min_acc, max_acc, 0, 500);
+          })
+          .style("stroke-opacity", .2)
+          .style("stroke-width", 0.5)
+          .style('stroke', function (d, i) {
+            return d3.hsl(240,
+                          1,
+                          0.25,
+                          1)
+          })
+          .style('fill', 'none');
+
+      } else {
+        window.addEventListener("devicemotion", handleMotion);
+        window.addEventListener("deviceorientation", handleOrientation);
+        document.getElementById("start_demo").innerHTML = "Stop demo and show visualization";
+        demo_button.classList.remove('btn-success');
+        demo_button.classList.add('btn-danger');
+        is_running = true;
+      }
+    };
+
+    function scale(x, min, max, a, b) {
+      return Math.floor(((b-a)*(x-min)/(max-min))+a);
+    }
+
+  </script>
+
+
+</body>
+
+<script>
+
+
+
+
+</script>
+
+</html>
