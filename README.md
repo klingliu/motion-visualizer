@@ -1,6 +1,6 @@
 # Motion Visualizer
 
-A mobile phone web app designed to visualize all motion data collected during use to explore potential usability research methods. This project was done for Brown University's REU, AI in Computational Creativity, under the guidance of Professor Jeff Huang and the Human-Computer Interaction Lab.
+A mobile phone web app designed to visualize all motion data collected during use to explore potential usability research methods. This project was done for Brown University's REU, AI in Computational Creativity, under the guidance of Professor Jeff Huang and the Human-Computer Interaction Lab. The code written in this project is based off the source code for https://sensor-js.xyz/.
 
 The research poster with the full explanation of concept and results is included below. The webapp is not currently accessible due to no longer having access to a host, but the HTML file is operable on mobile phones.
 
